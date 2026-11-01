@@ -1,0 +1,2 @@
+# Browser-impersonating HTTP client. Plain urllib gets 429s from Yahoo and timeouts from FRED.
+curl_cffi>=0.7
