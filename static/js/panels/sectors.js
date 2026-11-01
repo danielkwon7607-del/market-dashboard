@@ -1,6 +1,7 @@
 // Performance tracker: benchmark cards, sorted diverging bars, and a symbol × timeframe heatmap.
 // One engine, several instances: create({ endpoint: "/api/sectors" }) and create({ endpoint: "/api/em" }).
 import { poll } from "../lib/api.js";
+import { emit, on } from "../lib/bus.js";
 import { esc, pct, price, dirOf, spark, showTip, hideTip } from "../lib/format.js";
 
 const REFRESH_MS = 60_000;
@@ -140,7 +141,9 @@ export function create(opts) {
       if (animate) requestAnimationFrame(() => requestAnimationFrame(place)); else place();
     }
 
-    const setTf = (k) => { tf = k; save(`${o.key}.tf`, tf); render(); };
+    // Instances sharing a key (e.g. sector bars + sector heatmap) keep their timeframe in sync.
+    const setTf = (k) => { if (k === tf) return; tf = k; save(`${o.key}.tf`, tf); render(); emit(`tf:${o.key}`, k); };
+    on(`tf:${o.key}`, setTf);
 
     root.classList.add("sectors");
     root.innerHTML = `

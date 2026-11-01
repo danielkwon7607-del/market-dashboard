@@ -9,6 +9,7 @@ import * as feargreed from "./panels/feargreed.js";
 import * as charts from "./panels/charts.js";
 import * as compare from "./panels/compare.js";
 import * as macro from "./panels/macro.js";
+import * as forecasts from "./panels/forecasts.js";
 import * as companies from "./panels/companies.js";
 import { create as tracker } from "./panels/sectors.js";
 import { mountTabs } from "./lib/layout.js";
@@ -24,16 +25,16 @@ const TABS = [
   { id: "compare", label: "COMPARE", fill: true, modules: [
     { id: "compare", size: "full", init: compare.init },
   ] },
-  { id: "sectors", label: "SECTORS", fill: true, modules: [
+  // Sectors + heatmaps on one page; this tab scrolls.
+  { id: "sectors", label: "SECTORS", fill: false, modules: [
     { id: "sectors", size: "full", init: tracker({ ...SECTORS, parts: ["cards", "bars"], hotkeys: true }) },
-  ] },
-  { id: "heatmap", label: "HEATMAP", fill: true, modules: [
     { id: "sector-heat", size: "half", init: tracker({ ...SECTORS, title: "SECTOR HEATMAP", parts: ["heatmap"] }) },
     { id: "em-heat", size: "half", init: tracker({ ...EM, title: "EM HEATMAP", parts: ["heatmap"] }) },
+    { id: "em", size: "full", init: tracker({ ...EM, parts: ["cards", "bars"] }) },
   ] },
   { id: "macro", label: "MACRO", fill: true, modules: [
     { id: "macro", size: "half", init: macro.init },
-    { id: "em", size: "half", init: tracker({ ...EM, parts: ["cards", "bars"] }) },
+    { id: "forecasts", size: "half", init: forecasts.init },
   ] },
   { id: "companies", label: "COMPANIES", fill: true, modules: [
     { id: "megacaps", size: "full", init: companies.initBoard },

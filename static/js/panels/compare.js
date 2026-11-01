@@ -13,7 +13,7 @@ export async function init(root) {
   root.innerHTML = `
     <div class="panel-head">
       <span class="panel-title">COMPARE</span>
-      <span class="panel-sub brandline">% change from start of window</span>
+      <span class="panel-sub brandline">% change from start of window · drag to pan · wheel to zoom · drag an axis to stretch it</span>
       <div class="seg seg-sm tfs"></div>
       <div class="spacer"></div>
     </div>
@@ -49,7 +49,7 @@ export async function init(root) {
     on.has(b.dataset.id) ? on.delete(b.dataset.id) : on.add(b.dataset.id);
     save("compare.on", [...on]);
     series[b.dataset.id].applyOptions({ visible: on.has(b.dataset.id) });
-    renderLegend();
+    applyData(false);
   });
   chart.subscribeCrosshairMove((p) => {
     if (!p.time) return renderLegend();
@@ -59,31 +59,42 @@ export async function init(root) {
   });
 
   const tfSeg = root.querySelector(".tfs");
-  let timer;
-  async function refresh() {
+  let timer, intraday = false;
+  const cache = {}; // id -> rebased points for the current timeframe
+
+  // Only visible lines get data: hidden ones would still stretch the shared time axis
+  // (e.g. BTC trades 24/7 and would spread the futures out).
+  function applyData(fit) {
+    let longest = [];
+    for (const a of list) {
+      const pts = on.has(a.id) ? cache[a.id] || [] : [];
+      series[a.id].setData(pts);
+      if (pts.length > longest.length) longest = pts;
+    }
+    zero.setData(longest.map((p) => ({ time: p.time, value: 0 })));
+    chart.applyOptions({ timeScale: { timeVisible: intraday } });
+    if (fit) chart.timeScale().fitContent();
+    renderLegend();
+  }
+  // fit=true only on first load / timeframe change, so auto-refresh doesn't undo your panning and zooming.
+  async function refresh(fit = false) {
     clearTimeout(timer);
     tfSeg.innerHTML = timeframes.map((k) => `<button data-tf="${k}" class="${k === tf ? "on" : ""}">${k}</button>`).join("");
     const results = await Promise.allSettled(list.map((a) => getJSON(`/api/charts?id=${a.id}&tf=${tf}`)));
-    let intraday = false, longest = [];
     results.forEach((r, i) => {
       const a = list[i];
-      if (r.status !== "fulfilled" || !r.value.bars.length) { series[a.id].setData([]); latest[a.id] = null; return; }
+      if (r.status !== "fulfilled" || !r.value.bars.length) { cache[a.id] = []; latest[a.id] = null; return; }
       const bars = r.value.bars, base = bars[0].close;
       intraday = r.value.intraday;
-      const pts = bars.map((b) => ({ time: b.time, value: (b.close / base - 1) * 100 }));
-      series[a.id].setData(pts);
-      if (pts.length > longest.length) longest = pts;
-      latest[a.id] = pts.at(-1).value;
+      cache[a.id] = bars.map((b) => ({ time: b.time, value: (b.close / base - 1) * 100 }));
+      latest[a.id] = cache[a.id].at(-1).value;
     });
-    zero.setData(longest.map((p) => ({ time: p.time, value: 0 })));
-    chart.applyOptions({ timeScale: { timeVisible: intraday } });
-    chart.timeScale().fitContent();
-    renderLegend();
+    applyData(fit);
     timer = setTimeout(refresh, ["1D", "5D", "1M"].includes(tf) ? 60_000 : 300_000);
   }
   tfSeg.addEventListener("click", (e) => {
     const b = e.target.closest("[data-tf]");
-    if (b) { tf = b.dataset.tf; save("compare.tf", tf); refresh(); }
+    if (b) { tf = b.dataset.tf; save("compare.tf", tf); refresh(true); }
   });
-  refresh();
+  refresh(true);
 }

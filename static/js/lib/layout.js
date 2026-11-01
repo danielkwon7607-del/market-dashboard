@@ -1,6 +1,6 @@
 // Modular boards: each tab is a 2-column grid (fill tabs stretch rows to the screen height). Modules snap in as half or full width,
 // reorder by dragging the ⠿ grip, resize with the ◧ button. Layout is saved per browser.
-const KEY = "layout.v2";
+const KEY = "layout.v4";
 
 function loadSaved() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }

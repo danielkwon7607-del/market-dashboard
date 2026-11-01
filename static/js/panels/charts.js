@@ -49,6 +49,7 @@ function slot(index, assets, timeframes, grid, initialId) {
 
   function build() {
     if (chart) chart.remove();
+    el.querySelector(".cc-chart").innerHTML = ""; // drop the old overlay toolbar too
     chart = makeChart(el.querySelector(".cc-chart"), { decimals: asset.decimals });
     series = candles(chart, asset.decimals);
     baseLine = null;

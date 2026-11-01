@@ -47,17 +47,46 @@ FRED. `curl_cffi` makes requests look like Chrome (the same trick `yfinance` use
   them there.
 
 ### Tabs
-Each tab fits the screen, so you don't scroll the page. Long lists, like earnings, scroll inside their
-own box.
+Most tabs fit the screen, so you don't scroll the page. SECTORS is one long page on purpose.
 
 | Tab | What |
 |---|---|
-| **CHARTS** | A 2×2 grid of large candlestick charts. Each slot has an **asset picker** (ES, NQ, RTY, gold, US10Y, TLT, DXY, WTI, BTC, VIX) and **its own timeframe** (1D…5Y), and both are saved. Presets (INDICES, RATES & FX, MACRO MIX, CMDTY & CRYPTO) swap all four slots at once. SET ALL changes every timeframe. Hovering shows OHLC. |
+| **CHARTS** | A 2×2 grid of large candlestick charts. Each slot has an **asset picker** (ES, NQ, RTY, gold, US10Y, TLT, DXY, WTI, BTC, VIX) and **its own timeframe** (1D…5Y), and both are saved. Presets swap all four slots. SET ALL changes every timeframe. |
 | **COMPARE** | Comparable assets rebased to 0% on one chart, with their own timeframe. Click a legend chip to toggle a line. |
-| **SECTORS** | The 11 SPDR sectors plus SPY/QQQ/IWM: sorted bars, LEADING…LAGGING labels, and a breadth card with a risk-on/off read. Keys `1`–`5` switch timeframe. |
-| **HEATMAP** | Sector and emerging-market heatmaps side by side across all timeframes. |
-| **MACRO** | Tiles for the fed funds rate, CPI, core CPI, PCE, core PCE, unemployment, payrolls, claims, GDP and 2Y, each with its prior value, trend and **next release date**. Also a cross-asset quote strip and the emerging-markets tracker (country ETFs vs EEM). |
-| **COMPANIES** | Mega-cap board (24 largest US companies with today's move; click a tile for its quote page), earnings (UPCOMING with BMO/AMC and EPS estimate; RESULTS with BEAT/MISS and surprise %), and M&A / deals. Company headlines are in the news sidebar under the COMPANY filter. |
+| **SECTORS** | Scrolls. Sector tracker (bars, LEADING…LAGGING labels, breadth and risk-on/off), then sector and EM heatmaps side by side, then the EM tracker. The bars and heatmap share a timeframe. Keys `1`–`5` switch it. |
+| **MACRO** | Tiles for the Fed, inflation, jobs, GDP and rates, each with its prior value, trend and next release date, plus a cross-asset quote strip. Next to them is **Predictions** (below). |
+| **COMPANIES** | Mega-cap board, earnings (upcoming and results with BEAT/MISS), M&A / deals. |
+
+### Chart controls (all charts, TradingView-style)
+| Do this | Get this |
+|---|---|
+| drag the chart | pan through time; with AUTO off, also pan up/down |
+| mouse wheel / pinch | zoom in/out on time |
+| horizontal trackpad swipe | scroll sideways through time |
+| drag the **price axis** up/down | stretch or squeeze prices (switches AUTO off) |
+| drag the **time axis** left/right | stretch or squeeze time |
+| double-click an axis | reset that axis |
+| **AUTO** / **LOG** / **⟲** (top-left of each chart) | auto-fit prices / log scale / reset the whole view |
+
+Auto-refresh keeps your zoom and pan. Only switching timeframe re-fits the chart.
+
+### Predictions (Macro tab)
+Every upcoming print gets three numbers:
+- **MODEL** (lavender, dashed, "≈"): a deliberately simple projection, so it's a baseline to beat, not a
+  forecast to trust. Inflation carries forward the last 3 months' m/m pace; unemployment and payrolls use
+  3-month averages; GDP uses a 4-quarter average; claims use a 4-week average. The model's number is frozen
+  the first time a period appears, so it can't be adjusted after the fact.
+- **YOU** (cyan): type your call. It saves when you press Enter or click away, and stays editable until
+  release day.
+- **ACTUAL** (white): pulled from FRED once it's out. The **SCORECARD** shows who was closer and keeps a
+  running YOU vs MODEL tally.
+
+The **FOMC** card is market-implied from 30-day fed funds futures (`ZQ` on Yahoo). It shows the expected
+bp move and the odds of a 25bp step. You make your call with the −50…+50 buttons, and it's scored against
+the actual change in the target rate.
+
+Predictions are saved in `data/predictions.json` on your machine. It's git-ignored, so everyone who clones
+the repo keeps their own record.
 
 ### Moving modules
 Inside a tab, drag a module by its **⠿** grip to reorder it, and use **▭ FULL / ◧ HALF** to resize it.
@@ -75,15 +104,19 @@ market_dashboard/
     http.py  cache.py yahoo.py  fred.py  news.py  calendar.py  nasdaq.py  sentiment.py
   services/           turn provider data into one JSON payload per endpoint
     macro.py  sectors.py (also EM)  news.py  charts.py  sentiment.py  companies.py  tickers.py
+    forecasts.py      model projections, Fed-futures odds, your guesses + scoring (POST /api/forecasts)
+  data/               predictions.json (created on first run, git-ignored)
   static/
     index.html  css/app.css
     js/app.js         TABS: which modules live on which tab (fill: true = fit to screen)
     js/lib/           api.js, store.js (shared polling), layout.js (drag/snap grid), chart.js, news-ui.js, bus.js, format.js
-    js/panels/        ticker  topbar  feargreed  news  charts  compare  sectors  macro  companies
+    js/panels/        ticker  topbar  feargreed  news  charts  compare  sectors  macro  forecasts  companies
 ```
 
 ## Adding features
 
+- **Another prediction:** add a row to `INDICATORS` in `services/forecasts.py` (FRED series, transform,
+  release calendar, model).
 - **Another chart asset:** add a row to `CHART_ASSETS` in `config.py`. It then shows up in every slot's
   picker. Presets are in `PRESETS` in `js/panels/charts.js`.
 - **Another EM country or sector:** add it to `EM_ITEMS` or `SECTORS`.

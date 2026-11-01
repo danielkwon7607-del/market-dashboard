@@ -16,3 +16,10 @@ export function poll(url, ms, onData, onError = console.error) {
   tick();
   return () => clearTimeout(timer);
 }
+
+export async function postJSON(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(out.error || `HTTP ${r.status}`);
+  return out;
+}
