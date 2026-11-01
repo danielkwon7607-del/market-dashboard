@@ -20,10 +20,11 @@ function cellColor(v, max) {
 
 /**
  * opts: endpoint, title, sub, key (localStorage + keyboard), benchmark (symbol for the dashed line),
- *       spread: [groupA, groupB, label] for the breadth card (e.g. cyclical − defensive), hotkeys
+ *       spread: [groupA, groupB, label] for the breadth card (e.g. cyclical − defensive), hotkeys,
+ *       parts: any of ["cards", "bars", "heatmap"] (default all three)
  */
 export function create(opts) {
-  const o = { benchmark: "SPY", spread: null, hotkeys: false, ...opts };
+  const o = { benchmark: "SPY", spread: null, hotkeys: false, parts: ["cards", "bars", "heatmap"], ...opts };
   return (root) => {
     let data = null, tf = load(`${o.key}.tf`, "1D");
     const basket = () => data.items.filter((i) => !i.benchmark);
@@ -131,7 +132,10 @@ export function create(opts) {
       if (!data) return;
       root.querySelector(".seg").innerHTML = data.timeframes.map((k) => `<button data-tf="${k}" class="${k === tf ? "on" : ""}">${k}</button>`).join("");
       root.querySelector(".asof").textContent = asOfLabel();
-      root.querySelector(".sectors-body").innerHTML = cards() + `<div class="grid2">${bars()}${heatmap()}</div>`;
+      const has = (p) => o.parts.includes(p);
+      const pieces = [has("bars") && bars(), has("heatmap") && heatmap()].filter(Boolean);
+      root.querySelector(".sectors-body").innerHTML = (has("cards") ? cards() : "") +
+        (pieces.length > 1 ? `<div class="grid2">${pieces.join("")}</div>` : pieces.join(""));
       const place = () => root.querySelectorAll(".bar").forEach((b) => { b.style.left = `${b.dataset.l}%`; b.style.width = `${b.dataset.w}%`; });
       if (animate) requestAnimationFrame(() => requestAnimationFrame(place)); else place();
     }

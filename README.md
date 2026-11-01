@@ -46,29 +46,22 @@ FRED. `curl_cffi` makes requests look like Chrome (the same trick `yfinance` use
 - Impact and sentiment come from keyword weights in `config.py` (`IMPACT_WEIGHTS`, `SENTIMENT_*`), so tune
   them there.
 
-### Markets tab
-- **Charts:** candlestick charts for ES, NQ, RTY, gold, the US 10Y yield, TLT (long bonds), DXY, WTI,
-  BTC and VIX. **Every chart has its own timeframe** (1D, 5D, 1M, 3M, 6M, YTD, 1Y, 5Y), saved per chart.
-  "SET ALL" changes them all at once, and the grid can show 2, 3 or 4 per row. Hovering shows OHLC.
-- **Compare:** the comparable assets rebased to 0% on one chart, with its own timeframe. Click a legend
-  chip to toggle a line.
-- **Emerging markets:** country ETFs (China, India, Taiwan, Korea, Brazil, Mexico and others) against
-  EEM, with the same bars and heatmap as the sector tracker.
-- **Sector tracker:** the 11 SPDR sectors plus SPY/QQQ/IWM across 1D/1W/1M/3M/YTD, with
-  LEADING…LAGGING labels, a breadth card with a risk-on/off read, and a heatmap.
+### Tabs
+Each tab fits the screen, so you don't scroll the page. Long lists, like earnings, scroll inside their
+own box.
 
-### Companies tab
-- **Mega-cap board:** the 24 largest US companies with today's move. They drive NQ and ES. Click a tile
-  to open its Yahoo quote page.
-- **Earnings:** UPCOMING (with BMO/AMC and the EPS estimate) and RESULTS (actual vs estimate,
-  BEAT/MISS, surprise %), for companies worth $10B or more.
-- **M&A / deals:** acquisition, merger and takeover headlines, tagged with the companies involved.
-- **Company news:** every headline that names a listed company. Tickers are recognized from Nasdaq's
-  screener (6,000+ US listings).
+| Tab | What |
+|---|---|
+| **CHARTS** | A 2×2 grid of large candlestick charts. Each slot has an **asset picker** (ES, NQ, RTY, gold, US10Y, TLT, DXY, WTI, BTC, VIX) and **its own timeframe** (1D…5Y), and both are saved. Presets (INDICES, RATES & FX, MACRO MIX, CMDTY & CRYPTO) swap all four slots at once. SET ALL changes every timeframe. Hovering shows OHLC. |
+| **COMPARE** | Comparable assets rebased to 0% on one chart, with their own timeframe. Click a legend chip to toggle a line. |
+| **SECTORS** | The 11 SPDR sectors plus SPY/QQQ/IWM: sorted bars, LEADING…LAGGING labels, and a breadth card with a risk-on/off read. Keys `1`–`5` switch timeframe. |
+| **HEATMAP** | Sector and emerging-market heatmaps side by side across all timeframes. |
+| **MACRO** | Tiles for the fed funds rate, CPI, core CPI, PCE, core PCE, unemployment, payrolls, claims, GDP and 2Y, each with its prior value, trend and **next release date**. Also a cross-asset quote strip and the emerging-markets tracker (country ETFs vs EEM). |
+| **COMPANIES** | Mega-cap board (24 largest US companies with today's move; click a tile for its quote page), earnings (UPCOMING with BMO/AMC and EPS estimate; RESULTS with BEAT/MISS and surprise %), and M&A / deals. Company headlines are in the news sidebar under the COMPANY filter. |
 
 ### Moving modules
-Drag a module by its **⠿** grip to reorder it, and use **▭ FULL / ◧ HALF** to resize it. Modules snap
-into a two-column grid, so half is the smallest size. Your layout is saved in your browser. To reset
+Inside a tab, drag a module by its **⠿** grip to reorder it, and use **▭ FULL / ◧ HALF** to resize it.
+Modules snap into a two-column grid, so half is the smallest size. Your layout is saved in your browser. To reset
 it, run `dashboard.resetLayout()` in the browser console.
 
 ## Layout
@@ -84,14 +77,15 @@ market_dashboard/
     macro.py  sectors.py (also EM)  news.py  charts.py  sentiment.py  companies.py  tickers.py
   static/
     index.html  css/app.css
-    js/app.js         TABS: which modules live on which tab
+    js/app.js         TABS: which modules live on which tab (fill: true = fit to screen)
     js/lib/           api.js, store.js (shared polling), layout.js (drag/snap grid), chart.js, news-ui.js, bus.js, format.js
-    js/panels/        ticker  topbar  feargreed  news  charts  compare  sectors  companies
+    js/panels/        ticker  topbar  feargreed  news  charts  compare  sectors  macro  companies
 ```
 
 ## Adding features
 
-- **Another chart:** add a row to `CHART_ASSETS` in `config.py`.
+- **Another chart asset:** add a row to `CHART_ASSETS` in `config.py`. It then shows up in every slot's
+  picker. Presets are in `PRESETS` in `js/panels/charts.js`.
 - **Another EM country or sector:** add it to `EM_ITEMS` or `SECTORS`.
 - **Another ticker quote:** add a row to `MARKET_QUOTES`.
 - **Another macro print** (anything on FRED): add the series to `FRED_SERIES`, add a builder to
@@ -103,7 +97,8 @@ market_dashboard/
   2. Register it in `ROUTES` in `server.py`.
   3. `static/js/panels/<thing>.js` exporting `init(el)`. Start it with a `.panel-head`, which is where the
      grip and size buttons attach. Use `subscribe(url, ms, fn)` from `lib/store.js` to share a poll.
-  4. Add `{ id, size: "half" | "full", init }` to a tab in `TABS` in `js/app.js`.
+  4. Add `{ id, size: "half" | "full", init }` to a tab in `TABS` in `js/app.js`, or add a new tab there.
+     For example, `companies.initCompanyNews` is a ready-made company-news module you can add to any tab.
 - **Panels talking to each other:** `emit` / `on` from `js/lib/bus.js`. The news panel emits `news:new` and
   `news:all`, and the ticker listens to both.
 

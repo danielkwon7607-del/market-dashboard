@@ -1,6 +1,6 @@
-// Modular boards: each tab is a 2-column grid. Modules snap in as half or full width,
+// Modular boards: each tab is a 2-column grid (fill tabs stretch rows to the screen height). Modules snap in as half or full width,
 // reorder by dragging the ⠿ grip, resize with the ◧ button. Layout is saved per browser.
-const KEY = "layout.v1";
+const KEY = "layout.v2";
 
 function loadSaved() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
@@ -34,7 +34,7 @@ export function mountTabs({ tabsEl, workspace, tabs, onSwitch }) {
 
   for (const tab of tabs) {
     const board = document.createElement("div");
-    board.className = "board";
+    board.className = `board ${tab.fill ? "fill" : ""}`;
     board.dataset.tab = tab.id;
     workspace.appendChild(board);
     boards[tab.id] = board;

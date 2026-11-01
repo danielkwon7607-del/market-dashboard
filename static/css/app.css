@@ -126,7 +126,8 @@ button { font: inherit; color: inherit; }
 .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .pill.live .dot { background: var(--up); box-shadow: 0 0 6px var(--up); }
 .pill.warn .dot { background: var(--fed); }
-.clock { font: 12px var(--mono); color: var(--text-2); display: flex; gap: 14px; }
+.clock { font: 12px var(--mono); color: var(--text-2); display: flex; gap: 14px; white-space: nowrap; }
+.pill { white-space: nowrap; }
 .clock b { color: var(--text); font-weight: 600; }
 
 /* ---- Tabs + fear & greed (top bar) -------------------------------------- */
@@ -176,6 +177,19 @@ button { font: inherit; color: inherit; }
   grid-auto-flow: row dense; gap: 1px; background: var(--line); align-content: start;
 }
 .board[hidden] { display: none; }
+/* Fill tabs: the board is exactly the workspace height; rows share it and lists scroll inside. */
+.workspace:has(.board.fill:not([hidden])) { overflow: hidden; height: calc(100vh - 76px); }
+.board.fill { height: 100%; grid-auto-rows: minmax(0, 1fr); }
+.board.fill .module { min-height: 0; overflow: hidden; }
+.board.fill .sectors-body, .board.fill .co-list, .board.fill .mc-grid, .board.fill .macro-body { flex: 1; min-height: 0; overflow: auto; max-height: none; }
+.board.fill .chart-grid { flex: 1; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
+.board.fill .cmp-chart { flex: 1; min-height: 0; height: auto; }
+.board.fill .heat td { height: 30px; font-size: 12.5px; }
+.board.fill .bar-row { height: 34px; }
+.board.fill .sectors-body > .box, .board.fill .grid2 { flex: none; }
+.board.fill .mc { padding: 8px 10px; }
+.board.fill .mc-sym { font-size: 18px; }
+.board.fill .mc-grid { padding: 10px 12px; }
 .module { container-type: inline-size; min-width: 0; }
 .module[data-size="full"] { grid-column: 1 / -1; }
 .module.dragging { opacity: .45; outline: 2px dashed var(--accent); outline-offset: -2px; }
@@ -197,11 +211,19 @@ button { font: inherit; color: inherit; }
 
 /* ---- Charts grid -------------------------------------------------------- */
 .chart-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 1px; background: var(--line); border-top: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(380px, 1fr);
+  gap: 1px; background: var(--line);
 }
-.chart-card { background: var(--panel); display: flex; flex-direction: column; min-width: 0; padding: 10px 10px 4px; }
+.chart-card { background: var(--panel); display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 10px 12px 6px; }
 .chart-card.cc-err .cc-chart { opacity: .3; }
+.cc-select {
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+  font: 800 18px var(--mono); color: #fff; letter-spacing: .02em;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23787b86' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat right 4px center;
+  border: 1px solid transparent; border-radius: 5px; padding: 2px 20px 2px 6px; margin-left: -6px;
+}
+.cc-select:hover { border-color: var(--line-2); }
+.cc-select option { background: var(--panel-2); color: var(--text); font-size: 13px; }
 .cc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .cc-id { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .cc-sym { font: 800 16px var(--mono); color: #fff; letter-spacing: .02em; }
@@ -213,7 +235,8 @@ button { font: inherit; color: inherit; }
 .cc-bar .seg { flex-wrap: wrap; }
 .cc-ohlc { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; }
 .cc-ohlc b { color: var(--text-2); font-weight: 600; }
-.cc-chart { height: 210px; position: relative; }
+.cc-chart { flex: 1; min-height: 0; position: relative; }
+.cc-px { font-size: 16px !important; }
 
 /* ---- Compare ------------------------------------------------------------ */
 .cmp-legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px 4px; }
@@ -226,7 +249,22 @@ button { font: inherit; color: inherit; }
 .cmp-chip.on { color: var(--text); border-color: var(--line-2); background: var(--panel-2); }
 .cmp-chip.on i { opacity: 1; }
 .cmp-chip span { color: var(--text-2); font-weight: 500; }
-.cmp-chart { height: 360px; margin: 4px 6px 8px; }
+.cmp-chart { height: 420px; margin: 4px 6px 8px; }
+
+/* ---- Macro board -------------------------------------------------------- */
+.macro-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+.mt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.mt { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+.mt-k { display: flex; justify-content: space-between; font: 700 10.5px var(--mono); letter-spacing: .08em; color: var(--text-2); }
+.mt-k span { color: var(--muted); font-weight: 500; letter-spacing: .02em; }
+.mt-v { font: 700 21px var(--mono); color: #fff; margin: 2px 0 3px; }
+.mt-dir { font-size: 12px; }
+.mt-p { font: 10.5px var(--mono); color: var(--muted); }
+.mt-next { margin-top: auto; padding-top: 5px; font: 700 10px var(--mono); color: var(--fed); letter-spacing: .03em; }
+.mq-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.mq { display: flex; gap: 8px; align-items: baseline; padding: 7px 10px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); font-size: 12px; white-space: nowrap; }
+.mq-k { font: 700 10.5px var(--mono); color: var(--text-2); }
+.mq .num:last-child { margin-left: auto; font-size: 11px; }
 
 /* ---- Companies ---------------------------------------------------------- */
 .mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; padding: 12px 14px 14px; }
@@ -485,11 +523,13 @@ button { font: inherit; color: inherit; }
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .panel-head { flex-wrap: wrap; height: auto; min-height: 44px; padding-block: 6px; }
 }
+@media (max-width: 1800px) {
+  .session .pill:not(.live) { display: none; }
+}
 @media (max-width: 1500px) {
   .clock .alt { display: none; }
 }
 @media (max-width: 1300px) {
-  .session .pill:not(.live) { display: none; }
   .fg-c, .fg-bar { display: none; }
 }
 @media (max-width: 1100px) {
@@ -500,6 +540,12 @@ button { font: inherit; color: inherit; }
   .layout { grid-template-columns: 1fr; }
   .workspace { max-height: none; overflow: visible; }
   .board { grid-template-columns: 1fr; }
+  .workspace:has(.board.fill:not([hidden])) { overflow: visible; height: auto; }
+  .board.fill { height: auto; grid-auto-rows: auto; }
+  .board.fill .module { overflow: visible; }
+  .chart-grid, .board.fill .chart-grid { grid-template-columns: 1fr; grid-auto-rows: 340px; }
+  .board.fill .cmp-chart { height: 360px; flex: none; }
+  .board.fill .co-list { max-height: 520px; }
   .module[data-size] { grid-column: auto; }
   .mod-size { display: none; }
   .news { position: static; max-height: 70vh; }
