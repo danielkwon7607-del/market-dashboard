@@ -5,21 +5,25 @@ import sys
 import traceback
 import warnings
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse
 
 warnings.filterwarnings("ignore")  # LibreSSL noise from the system Python
 
 import config
-from services import macro, news, sectors
+from services import charts, companies, macro, news, sectors, sentiment
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.path.join(ROOT, "static")
 
-# Add a feature: write services/<thing>.py with payload() and register it here.
+# Add a feature: write services/<thing>.py with payload(q) (q = query-string dict) and register it here.
 ROUTES = {
     "/api/sectors": sectors.payload,
     "/api/macro": macro.payload,
     "/api/news": news.payload,
+    "/api/em": sectors.em_payload,
+    "/api/charts": charts.payload,       # ?id=ES&tf=1M for bars; no params for the asset list
+    "/api/sentiment": sentiment.payload,
+    "/api/companies": companies.payload,
 }
 
 
@@ -28,10 +32,11 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*a, directory=STATIC, **kw)
 
     def do_GET(self):
-        path = urlparse(self.path).path
+        url = urlparse(self.path)
+        path = url.path
         if path in ROUTES:
             try:
-                body, status = json.dumps(ROUTES[path]()).encode(), 200
+                body, status = json.dumps(ROUTES[path](dict(parse_qsl(url.query)))).encode(), 200
             except Exception as e:  # noqa: BLE001
                 traceback.print_exc()
                 body, status = json.dumps({"error": str(e)}).encode(), 502

@@ -76,3 +76,68 @@ def close_on_or_before(bars, day):
         else:
             break
     return best
+
+
+@ttl_cache(60)
+def candles(symbol, rng, interval, keep_hours=None):
+    """OHLC bars for charts. Intraday times are shifted to exchange-local 'wall clock' seconds
+    (charting libs render UTC), daily+ bars use 'YYYY-MM-DD'."""
+    data = http.get_json(CHART_URL.format(symbol=symbol),
+                         params={"range": rng, "interval": interval, "includePrePost": "false"})
+    res = data["chart"]["result"][0]
+    meta = res["meta"]
+    q = res["indicators"]["quote"][0]
+    try:
+        tz = ZoneInfo(meta["exchangeTimezoneName"])
+    except Exception:  # noqa: BLE001
+        tz = dt.timezone(dt.timedelta(seconds=meta.get("gmtoffset", 0)))
+    intraday = interval[-1] in "mh"
+    stamps = res.get("timestamp") or []
+    if keep_hours and stamps:
+        cutoff = stamps[-1] - keep_hours * 3600
+    else:
+        cutoff = None
+    bars, before = [], None
+    for i, ts in enumerate(stamps):
+        o, h, l, c = (q.get(k, [None])[i] for k in ("open", "high", "low", "close"))
+        if None in (o, h, l, c) or c <= 0:
+            continue
+        # Yahoo sometimes zeroes O/H/L on the live bar; fall back to the close.
+        o, h, l = (x if x and x > 0 else c for x in (o, h, l))
+        h, l = max(h, o, c), min(l, o, c)
+        if cutoff and ts < cutoff:
+            before = c  # last close before the window = reference "previous close"
+            continue
+        local = dt.datetime.fromtimestamp(ts, tz)
+        t = int(ts + local.utcoffset().total_seconds()) if intraday else local.date().isoformat()
+        if bars and bars[-1]["time"] == t:  # Yahoo sometimes repeats the live bar
+            bars[-1] = {"time": t, "open": o, "high": h, "low": l, "close": c}
+            continue
+        bars.append({"time": t, "open": o, "high": h, "low": l, "close": c})
+    if intraday:
+        _fix_stale_opens(bars)
+    return {
+        "symbol": symbol,
+        "price": meta.get("regularMarketPrice"),
+        # Reference for the window's change: the close just before it, else the first open.
+        "base": before if before is not None else (bars[0]["open"] if bars else None),
+        "intraday": intraday,
+        "bars": bars,
+    }
+
+
+def _fix_stale_opens(bars):
+    """Yahoo occasionally stamps an intraday bar with a stale open (e.g. yesterday's close),
+    drawing a huge fake candle. If an open sits far from the previous close, re-anchor it."""
+    if len(bars) < 10:
+        return
+    ranges = sorted(b["high"] - b["low"] for b in bars)
+    typical = ranges[len(ranges) // 2] or 1e-9
+    for prev, b in zip(bars, bars[1:]):
+        gap = abs(b["open"] - prev["close"])
+        if gap > 8 * typical:
+            stale = b["open"]
+            b["open"] = prev["close"]
+            hi = b["high"] if b["high"] != stale else max(b["open"], b["close"])
+            lo = b["low"] if b["low"] != stale else min(b["open"], b["close"])
+            b["high"], b["low"] = max(hi, b["open"], b["close"]), min(lo, b["open"], b["close"])

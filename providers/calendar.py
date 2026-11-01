@@ -70,4 +70,6 @@ def earnings_on(day):
         "eps_last_year": r.get("lastYearEPS") or None,
         "quarter": r.get("fiscalQuarterEnding") or "",
         "market_cap": _money(r.get("marketCap")),
+        "eps": r.get("eps") or None,          # only on past dates
+        "surprise": r.get("surprise") or None,
     } for r in rows]

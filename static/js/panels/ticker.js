@@ -19,7 +19,7 @@ function matcherFor(it) {
   const alts = [sym, word.length > 3 && !generic.test(word) ? word : null].filter(Boolean);
   return new RegExp(`\\b(${alts.join("|")})\\b`, "i");
 }
-const related = (n, id, s) => n.ticker.includes(id) || (s.match && s.match.test(n.title));
+const related = (n, id, s) => (n.ticker || []).includes(id) || (n.tickers || []).some((t) => `ERN:${t.symbol}` === id) || (s.match && s.match.test(n.title));
 
 const els = (id) => root.querySelectorAll(`.tk[data-id="${CSS.escape(id)}"]`);
 

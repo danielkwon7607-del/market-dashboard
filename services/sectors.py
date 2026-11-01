@@ -1,4 +1,4 @@
-"""/api/sectors: multi-timeframe sector performance."""
+"""/api/sectors and /api/em: multi-timeframe performance for a basket of ETFs."""
 import datetime as dt
 
 import config
@@ -43,8 +43,18 @@ def _status(value, rank, count, key):
     return "FLAT"
 
 
-def payload():
-    rows = [(s, n, g, False) for s, n, g in config.SECTORS] + [(s, n, "benchmark", True) for s, n in config.BENCHMARKS]
+def payload(q=None):
+    return build([(s, n, g, False) for s, n, g in config.SECTORS] +
+                 [(s, n, "benchmark", True) for s, n in config.BENCHMARKS])
+
+
+def em_payload(q=None):
+    return build([(s, n, g, False) for s, n, g in config.EM_ITEMS] +
+                 [(s, n, "benchmark", True) for s, n in config.EM_BENCHMARKS])
+
+
+def build(rows):
+    """rows: [(symbol, name, group, is_benchmark)]. Status labels rank the non-benchmarks."""
     data = yahoo.many([r[0] for r in rows])
     items = []
     for sym, name, group, is_bench in rows:
@@ -59,7 +69,7 @@ def payload():
             "returns": _returns(h["bars"]), "spark": spark,
         })
 
-    # Status is ranked within the 11 sectors only.
+    # Status is ranked within the basket only, not the benchmarks.
     sectors = [i for i in items if not i["benchmark"]]
     for key, _ in config.TIMEFRAMES:
         ranked = sorted((i for i in sectors if i["returns"][key] is not None), key=lambda i: -i["returns"][key])

@@ -81,7 +81,8 @@ def fetch_all(feeds):
                     source, title = feed["name"], it["title"]
                     if feed.get("split_source") and " - " in title:
                         title, source = title.rsplit(" - ", 1)
-                    out.append(dict(it, title=title, source=source, category=feed["category"]))
+                    out.append(dict(it, title=title, source=source, category=feed["category"],
+                                    require_ticker=feed.get("require_ticker", False)))
             except Exception as e:  # noqa: BLE001
                 print(f"[news] {feed['name']}: {e}")
     return out

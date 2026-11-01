@@ -6,20 +6,24 @@
   <title>Market Dashboard</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23131722'/><path d='M3 11l3-3 2 2 5-5' stroke='%2322ab94' stroke-width='2' fill='none'/></svg>">
   <link rel="stylesheet" href="css/app.css">
+  <!-- TradingView's open-source charting library -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
   <div id="ticker" class="ticker" aria-label="Macro ticker"></div>
 
   <header class="topbar">
     <div class="brand"><span class="brand-mark"></span>MKT<span class="dim">/</span>DASH</div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
     <div class="session" id="session"></div>
     <div class="spacer"></div>
+    <div class="fg" id="feargreed"></div>
     <div class="clock" id="clock"></div>
   </header>
 
   <main class="layout">
-    <section id="sectors" class="panel sectors"></section>
-    <!-- New panels go here: <section id="myPanel" class="panel"></section> + a module in js/panels/ -->
+    <!-- One board per tab; modules are placed by js/lib/layout.js (see MODULES in js/app.js) -->
+    <div class="workspace" id="workspace"></div>
     <aside id="news" class="panel news"></aside>
   </main>
 

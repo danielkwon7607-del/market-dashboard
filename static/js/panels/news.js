@@ -1,17 +1,21 @@
-// Live news sidebar. Newest first, Fed/macro highlighted, filter chips, auto-refresh.
+// Live news sidebar. Newest first, filter chips, auto-refresh.
+// Background tint = market impact (faint green → yellow → red), left rail = category
+// (amber Fed, blue macro, green/red company by headline sentiment).
 import { poll } from "../lib/api.js";
 import { emit } from "../lib/bus.js";
-import { esc, ago, etTime } from "../lib/format.js";
+import { esc, ago } from "../lib/format.js";
+import { headline } from "../lib/news-ui.js";
 
 const REFRESH_MS = 60_000;
-const FILTERS = [["all", "ALL"], ["fed", "FED"], ["macro", "MACRO"], ["markets", "MARKETS"]];
+const FILTERS = [["all", "ALL"], ["high", "HIGH IMPACT"], ["fed", "FED"], ["macro", "MACRO"], ["company", "COMPANY"], ["markets", "MARKETS"]];
 const POLICY = /fomc|monetary|statement|minutes|federal funds|discount rate|powell|chair|beige book|projections/i;
-const BADGE = { fed: "FED", macro: "MACRO", markets: "" };
 
 let root, list, foot, items = [], filter = "all", seen = null, freshIds = new Set(), lastOk = null;
 
+const pass = (i) => filter === "all" || (filter === "high" ? i.level === "HIGH" : i.tag === filter);
+
 function render() {
-  const counts = { all: items.length };
+  const counts = { all: items.length, high: items.filter((i) => i.level === "HIGH").length };
   for (const it of items) counts[it.tag] = (counts[it.tag] || 0) + 1;
   root.querySelector(".news-filters").innerHTML = FILTERS.map(([k, label]) =>
     `<button class="chip ${k} ${filter === k ? "on" : ""}" data-f="${k}">${label}<b>${counts[k] || 0}</b></button>`).join("");
@@ -22,25 +26,16 @@ function render() {
       <span class="fed-pin-k">LATEST FROM THE FED <span class="num">${ago(fed.published)} ago</span></span>
       <span class="fed-pin-t">${esc(fed.title)}</span></a>` : "";
 
-  const shown = filter === "all" ? items : items.filter((i) => i.tag === filter);
-  list.innerHTML = shown.length ? shown.map((it) => {
-    const d = new Date(it.published);
-    return `<a class="ni ${it.tag} ${freshIds.has(it.id) ? "new" : ""}" href="${esc(it.link)}" target="_blank" rel="noopener" title="${esc(it.summary)}">
-      <div class="ni-meta">
-        ${BADGE[it.tag] ? `<span class="badge">${BADGE[it.tag]}</span>` : ""}
-        <span class="ni-src">${esc(it.source)}</span>
-        <span class="ni-age num">${etTime(d)} · ${ago(it.published)}</span>
-      </div>
-      <div class="ni-title">${esc(it.title)}</div>
-    </a>`;
-  }).join("") : `<div class="empty">No headlines</div>`;
+  const shown = items.filter(pass);
+  list.innerHTML = shown.length ? shown.map((it) => headline(it, { fresh: freshIds.has(it.id) })).join("") : `<div class="empty">No headlines</div>`;
   freshIds.clear();
   renderFoot();
 }
 
 function renderFoot() {
   const s = lastOk ? Math.round((Date.now() - lastOk) / 1000) : null;
-  foot.innerHTML = `<span>${s == null ? "connecting…" : `updated ${s}s ago`}</span><span>auto-refresh ${REFRESH_MS / 1000}s</span>`;
+  foot.innerHTML = `<span>${s == null ? "connecting…" : `updated ${s}s ago`}</span>
+    <span class="imp-legend">impact <i style="--h:130"></i>low <i style="--h:60"></i>med <i style="--h:0"></i>high</span>`;
 }
 
 function update(data) {

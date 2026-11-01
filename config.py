@@ -109,6 +109,93 @@ MACRO_KEYWORDS = [
     "jobs report", "payroll", "unemployment", "jobless", "gdp", "treasury", "yields", "recession",
     "tariff", "central bank", "ecb", "boj", "bank of japan", "bank of england",
 ]
-NEWS_MAX_ITEMS = 120
+NEWS_MAX_ITEMS = 160
 # Fed/macro items are rare, so they stay in the feed longer.
-NEWS_MAX_AGE_DAYS = {"fed": 30, "macro": 14, "markets": 4}
+NEWS_MAX_AGE_DAYS = {"fed": 30, "macro": 14, "markets": 4, "company": 4}
+
+# ---- Emerging markets tracker (same engine as the sector tracker) ---------
+EM_ITEMS = [
+    # (symbol, name, region)
+    ("FXI", "China Large-Cap", "asia"),
+    ("KWEB", "China Internet", "asia"),
+    ("INDA", "India", "asia"),
+    ("EWT", "Taiwan", "asia"),
+    ("EWY", "South Korea", "asia"),
+    ("EIDO", "Indonesia", "asia"),
+    ("EWZ", "Brazil", "latam"),
+    ("EWW", "Mexico", "latam"),
+    ("ARGT", "Argentina", "latam"),
+    ("EZA", "South Africa", "emea"),
+    ("TUR", "Turkey", "emea"),
+    ("KSA", "Saudi Arabia", "emea"),
+]
+EM_BENCHMARKS = [
+    ("EEM", "MSCI Emerging"),
+    ("SPY", "S&P 500"),
+    ("EMB", "EM USD Bonds"),
+]
+
+# ---- Charts grid -----------------------------------------------------------
+# (id, yahoo symbol, label, description, decimals, comparable)
+# comparable=False for levels (yields, VIX) where "% change" would mislead in the overlay.
+CHART_ASSETS = [
+    ("ES", "ES=F", "ES", "S&P 500 futures", 2, True),
+    ("NQ", "NQ=F", "NQ", "Nasdaq 100 futures", 2, True),
+    ("RTY", "RTY=F", "RTY", "Russell 2000 futures", 1, True),
+    ("GOLD", "GC=F", "GOLD", "Gold futures", 1, True),
+    ("US10Y", "^TNX", "US10Y", "10-year Treasury yield", 3, False),
+    ("TLT", "TLT", "TLT", "20+ yr Treasury bonds", 2, True),
+    ("DXY", "DX-Y.NYB", "DXY", "US Dollar Index", 2, True),
+    ("WTI", "CL=F", "WTI", "Crude oil futures", 2, True),
+    ("BTC", "BTC-USD", "BTC", "Bitcoin", 0, True),
+    ("VIX", "^VIX", "VIX", "Volatility index", 2, False),
+]
+# timeframe -> (yahoo range, interval, keep only the last N hours or None)
+CHART_TIMEFRAMES = {
+    "1D": ("5d", "5m", 24),
+    "5D": ("5d", "15m", None),
+    "1M": ("1mo", "60m", None),
+    "3M": ("3mo", "1d", None),
+    "6M": ("6mo", "1d", None),
+    "YTD": ("ytd", "1d", None),
+    "1Y": ("1y", "1d", None),
+    "5Y": ("5y", "1wk", None),
+}
+
+# ---- Company tab -----------------------------------------------------------
+MEGACAP_COUNT = 24                    # tiles on the mega-cap board
+TICKER_MATCH_MIN_CAP = 5e9            # only these companies are recognised in headlines
+COMPANY_EARNINGS_MIN_CAP = 10e9
+COMPANY_FEEDS = [
+    # require_ticker: drop items that don't name a listed company (filters out sports "buyouts" etc.)
+    {"name": "Google News M&A", "category": "company", "split_source": True, "max_items": 60, "require_ticker": True,
+     "url": "https://news.google.com/rss/search?q=%22to+acquire%22+OR+%22agrees+to+buy%22+OR+%22merger+agreement%22+OR+%22takeover+offer%22+OR+%22all-cash+deal%22+OR+%22acquisition+of%22+when:3d&hl=en-US&gl=US&ceid=US:en"},
+    {"name": "CNBC Earnings", "category": "company", "url": "https://www.cnbc.com/id/15839135/device/rss/rss.html"},
+]
+DEAL_KEYWORDS = ["acquire", "acquisition", "merger", "merge with", "takeover", "buyout", "to buy ",
+                 "agrees to buy", "bid for", "deal to buy", "stake in", "spin off", "spinoff", "tender offer"]
+
+# ---- News impact + sentiment (keyword heuristics, tune freely) ---------------
+# Each matching phrase adds its weight; total >= 3 is HIGH (red), ~1.5 MEDIUM (yellow), 0 LOW (green).
+IMPACT_WEIGHTS = {
+    3: ["breaking", "fomc", "rate decision", "raises rates", "cuts rates", "rate cut", "rate hike",
+        "emergency", "circuit breaker", "trading halt", "crash", "invasion", "missile", "default",
+        "bankruptcy", "recession", "government shutdown", "black monday", "contagion", "bailout",
+        "jobs report", "nonfarm", "payrolls", "cpi", "consumer price index"],
+    2: ["powell", "fed chair", "inflation", "pce", "gdp", "war", "attack", "sanctions", "tariff",
+        "plunge", "plunges", "tumble", "sell-off", "selloff", "rout", "soar", "soars", "surges",
+        "hormuz", "opec", "downgrade", "guidance", "treasury yields", "bond market", "unemployment"],
+    1: ["earnings", "beats", "misses", "merger", "acquisition", "acquire", "takeover", "buyout",
+        "layoffs", "upgrade", "yields", "oil", "crude", "ecb", "bank of japan", "boj", "bank of england",
+        "china", "ipo", "antitrust", "lawsuit", "probe", "record high", "futures", "rally", "jumps",
+        "falls", "slides", "stocks", "nasdaq", "s&p 500", "dow"],
+}
+# A company worth more than this in a headline bumps impact (moves the indices).
+IMPACT_MEGACAP = 400e9
+SENTIMENT_POSITIVE = ["beat", "beats", "tops", "surge", "surges", "soar", "soars", "jump", "jumps", "rally",
+                      "rallies", "record", "raises guidance", "raises outlook", "upgrade", "upgraded", "wins",
+                      "approval", "approved", "gains", "climbs", "rises", "strong", "boost", "buyback", "beat estimates"]
+SENTIMENT_NEGATIVE = ["miss", "misses", "plunge", "plunges", "tumble", "tumbles", "slump", "slumps", "falls",
+                      "drops", "sinks", "cuts guidance", "lowers outlook", "warns", "downgrade", "downgraded",
+                      "lawsuit", "probe", "investigation", "recall", "layoffs", "cuts jobs", "bankruptcy",
+                      "fraud", "weak", "loss", "slides", "halts", "fined", "delay"]

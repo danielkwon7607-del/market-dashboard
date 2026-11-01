@@ -266,7 +266,7 @@ def earnings_items():
     return out
 
 
-def payload():
+def payload(q=None):
     macro = macro_items()
     market = market_items()
     earnings = earnings_items()
