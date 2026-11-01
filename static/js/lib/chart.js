@@ -7,7 +7,7 @@
 // Each chart gets a small overlay: AUTO (auto-fit prices), LOG (candles only), and ⟲ (reset view).
 const LWC = () => window.LightweightCharts;
 
-export const COLORS = { up: "#22ab94", down: "#f23645", text: "#787b86", grid: "#1b2130", border: "#2a2e39" };
+export const COLORS = { up: "#1fbf75", down: "#ff4d4d", text: "#7a7a7a", grid: "#111111", border: "#262626" };
 
 export function makeChart(el, { intraday = false, percent = false, decimals = 2 } = {}) {
   const chart = LWC().createChart(el, {
@@ -18,7 +18,7 @@ export function makeChart(el, { intraday = false, percent = false, decimals = 2 
     grid: { vertLines: { color: COLORS.grid }, horzLines: { color: COLORS.grid } },
     rightPriceScale: { borderColor: COLORS.border, scaleMargins: { top: 0.12, bottom: 0.08 } },
     timeScale: { borderColor: COLORS.border, timeVisible: intraday, secondsVisible: false, rightOffset: 3 },
-    crosshair: { mode: 0, vertLine: { color: "#4a5263", labelBackgroundColor: "#2a2e39" }, horzLine: { color: "#4a5263", labelBackgroundColor: "#2a2e39" } },
+    crosshair: { mode: 0, vertLine: { color: "#555", labelBackgroundColor: "#262626" }, horzLine: { color: "#555", labelBackgroundColor: "#262626" } },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
     handleScale: {
       axisPressedMouseMove: { time: true, price: true },
@@ -31,6 +31,16 @@ export function makeChart(el, { intraday = false, percent = false, decimals = 2 
     },
   });
   addToolbar(el, chart, { log: !percent }); // log scale makes no sense for % change
+  // A chart built on a hidden tab has zero width, so its first fit is wrong. Re-fit when it first shows up.
+  let wasHidden = el.clientWidth === 0;
+  new ResizeObserver(() => {
+    if (wasHidden && el.clientWidth > 0) {
+      wasHidden = false;
+      requestAnimationFrame(() => chart.timeScale().fitContent());
+    } else if (el.clientWidth === 0) {
+      wasHidden = true;
+    }
+  }).observe(el);
   return chart;
 }
 

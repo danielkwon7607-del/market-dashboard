@@ -1,6 +1,6 @@
 # Market Dashboard
 
-A dark, TradingView-style market dashboard for futures day trading. It has:
+A minimal, Bloomberg-style (black, amber headers, flat panels) market dashboard for futures day trading. It has:
 
 - a rotating macro and earnings ticker
 - a Fear & Greed gauge that stays visible

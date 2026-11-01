@@ -7,7 +7,7 @@ import { esc, pct, price, dirOf, spark, showTip, hideTip } from "../lib/format.j
 const REFRESH_MS = 60_000;
 const STATUS_ICON = { LEADING: "▲▲", ADVANCING: "▲", FLAT: "■", DECLINING: "▼", LAGGING: "▼▼" };
 // Heatmap poles: deeper than the text-green/red so light cell text stays readable.
-const NEUTRAL = [27, 32, 43], UP = [14, 128, 106], DOWN = [186, 34, 48];
+const NEUTRAL = [20, 20, 20], UP = [16, 122, 74], DOWN = [178, 38, 38];
 
 function load(k, d) { try { return localStorage.getItem(k) || d; } catch { return d; } }
 function save(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } }

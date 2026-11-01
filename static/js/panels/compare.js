@@ -33,7 +33,7 @@ export async function init(root) {
   }
   // Invisible series that carries the 0% reference line.
   const zero = chart.addLineSeries({ color: "rgba(0,0,0,0)", lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false });
-  zero.createPriceLine({ price: 0, color: "#5d6577", lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+  zero.createPriceLine({ price: 0, color: "#555", lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
 
   const legend = root.querySelector(".cmp-legend");
   function renderLegend(values = latest) {

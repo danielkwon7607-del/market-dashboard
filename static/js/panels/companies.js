@@ -14,7 +14,7 @@ const quoteUrl = (s) => `https://finance.yahoo.com/quote/${encodeURIComponent(s.
 function tint(p) {
   if (p == null) return "transparent";
   const a = Math.min(0.42, Math.abs(p) / 6 * 0.42 + 0.05);
-  return p >= 0 ? `rgba(34,171,148,${a})` : `rgba(242,54,69,${a})`;
+  return p >= 0 ? `rgba(31,191,117,${a})` : `rgba(255,77,77,${a})`;
 }
 
 export function initBoard(root) {

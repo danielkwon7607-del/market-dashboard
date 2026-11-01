@@ -68,7 +68,7 @@ function slot(index, assets, timeframes, grid, initialId) {
       chart.applyOptions({ timeScale: { timeVisible: d.intraday } });
       series.setData(d.bars);
       if (baseLine) series.removePriceLine(baseLine);
-      baseLine = d.base ? series.createPriceLine({ price: d.base, color: "#5d6577", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: tf === "1D" ? "prev" : "start" }) : null;
+      baseLine = d.base ? series.createPriceLine({ price: d.base, color: "#555", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: tf === "1D" ? "prev" : "start" }) : null;
       if (fit) chart.timeScale().fitContent();
       const unit = asset.id === "US10Y" ? "%" : "";
       el.querySelector(".cc-px").textContent = price(d.last, asset.decimals) + unit;
